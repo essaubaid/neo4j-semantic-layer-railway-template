@@ -7,6 +7,9 @@ services:
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
       - NEO4J_dbms_security_auth__enabled=true
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*,apoc.meta.*,apoc.schema.*
     ports:
       - "7474:7474"   # HTTP UI
       - "7687:7687"   # Bolt
