@@ -1,79 +1,77 @@
-# langchain-project
+# LangServe Symantec App Template
 
-## Installation
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/ig4r8_?referralCode=C0ESXA)
 
-Install the LangChain CLI if you haven't yet
+## Overview
+Template to deploy a FastAPI web server (via LangServe) backed by a Neo4j-powered semantic layer. This repo provides a one-click local setup for testing and a one-click Railway deploy for production.
 
+- Local: run everything (API + Neo4j) with a single docker compose command.
+- Railway: deploy using the button above.
+- Demo: uses the LangChain semantic layer template; chat at `/neo4j-semantic-layer/playground`.
+
+## Quickstart (Local)
+Prerequisites: Docker, Docker Compose, an OpenAI API key.
+
+1) Create a `.env` file in the project root with at least:
 ```bash
-pip install -U langchain-cli
+OPENAI_API_KEY=sk-...
+NEO4J_PASSWORD=pleasechangeme
 ```
 
-## Adding packages
-
+2) Start services:
 ```bash
-# adding packages from 
-# https://github.com/langchain-ai/langchain/tree/master/templates
-langchain app add $PROJECT_NAME
-
-# adding custom GitHub repo packages
-langchain app add --repo $OWNER/$REPO
-# or with whole git string (supports other git providers):
-# langchain app add git+https://github.com/hwchase17/chain-of-verification
-
-# with a custom api mount point (defaults to `/{package_name}`)
-langchain app add $PROJECT_NAME --api_path=/my/custom/path/rag
+docker compose up -d
 ```
 
-Note: you remove packages by their api path
-
+3) Ingest demo data (first run only):
 ```bash
-langchain app remove my/custom/path/rag
+# runs the one-off compose service named "ingest" (defined in docker-compose.yml)
+docker compose run --rm ingest
 ```
-
-## Setup LangSmith (Optional)
-LangSmith will help us trace, monitor and debug LangChain applications. 
-You can sign up for LangSmith [here](https://smith.langchain.com/). 
-If you don't have access, you can skip this section
-
-
-```shell
-export LANGSMITH_TRACING=true
-export LANGSMITH_API_KEY=<your-api-key>
-export LANGSMITH_PROJECT=<your-project>  # if not specified, defaults to "default"
-```
-
-## Launch LangServe
-
+If you don’t use the `ingest` service, you can run it through the app container:
 ```bash
-langchain serve
+docker compose exec app bash -lc "python packages/neo4j-semantic-layer/ingest.py"
 ```
 
-## Running in Docker
+4) Open:
+- API docs: http://localhost:8080/docs
+- Playground: http://localhost:8080/neo4j-semantic-layer/playground
+- Neo4j Browser: http://localhost:7474 (login: neo4j / your password)
 
-This project folder includes a Dockerfile that allows you to easily build and host your LangServe app.
-
-### Building the Image
-
-To build the image, you simply:
-
-```shell
-docker build . -t my-langserve-app
+## Deploy to Railway
+1) Click the “Deploy on Railway” button above and follow the prompts. The template provisions both the app and a Neo4j service.
+2) Set variables when prompted (see grid below). For Neo4j, set only `NEO4J_AUTH`.
+3) After deploy, run the ingestion once to load the demo dataset, for example as a one-off command on the app service:
+```bash
+python packages/neo4j-semantic-layer/ingest.py
 ```
 
-If you tag your image with something other than `my-langserve-app`,
-note it for use in the next step.
+## Environment variables
 
-### Running the Image Locally
+### App service
 
-To run the image, you'll need to include any environment variables
-necessary for your application.
+| Variable | Description | Required (Local) | Required (Railway) |
+|---|---|---|---|
+| 🔑 OPENAI_API_KEY | OpenAI API key used by the agent | Yes | Yes |
+| 🗄️ NEO4J_URI | Neo4j Bolt URI (e.g., `bolt://neo4j:7687` locally; Railway internal host) | No (defaults via compose) | Yes |
+| 👤 NEO4J_USERNAME | Neo4j username (default `neo4j`) | No (defaults via compose) | Yes |
+| 🔒 NEO4J_PASSWORD | Neo4j password | From compose `.env` | Yes |
 
-In the below example, we inject the `OPENAI_API_KEY` environment
-variable with the value set in my local environment
-(`$OPENAI_API_KEY`)
+### Neo4j service
 
-We also expose port 8080 with the `-p 8080:8080` option.
+| Variable | Description | Required |
+|---|---|---|
+| 🔐 NEO4J_AUTH | Neo4j auth in `user/password` form (e.g., `neo4j/pleasechangeme`) | Yes |
 
-```shell
-docker run -e OPENAI_API_KEY=$OPENAI_API_KEY -p 8080:8080 my-langserve-app
-```
+## Endpoints
+
+## Name ideas
+- NeoServe Graph Template
+- RailGraph LangServe
+- GraphSense LangServe
+- NeoLayer App Template
+- OpenAPI docs: `/docs`
+- Semantic layer playground: `/neo4j-semantic-layer/playground`
+
+## Notes
+- For the demo to work, run `packages/neo4j-semantic-layer/ingest.py` (or `scripts/ingest.sh`) once to populate the database.
