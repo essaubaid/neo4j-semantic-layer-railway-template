@@ -14,6 +14,9 @@ RUN poetry install  --no-interaction --no-ansi --no-root
 
 COPY ./app ./app
 
+COPY ./scripts ./scripts
+RUN chmod +x /code/scripts/ingest.sh
+
 RUN poetry install --no-interaction --no-ansi
 
 EXPOSE 8080
